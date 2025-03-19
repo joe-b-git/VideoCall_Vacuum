@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+message LightBumper {
+    bool light_bump_left = 1;
+    bool light_bump_front_left = 2;
+    bool light_bump_front_center_left = 3;
+    bool light_bump_front_center_right = 4;
+    bool light_bump_front_right = 5;
+    bool light_bump_right = 6;
+}

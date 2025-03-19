@@ -3,6 +3,7 @@ from ecal.core.publisher import ProtoPublisher
 import time
 import cv2
 import numpy as np
+import sys
 from proto_python.image_pb2 import ImageMessage
 
 def main():
@@ -52,5 +53,4 @@ def main():
         ecal_core.finalize()
 
 if __name__ == "__main__":
-    import sys
     main()
