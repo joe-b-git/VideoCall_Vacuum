@@ -1,0 +1,15 @@
+#!/bin/bash
+
+killall python3
+
+cd ~
+cd roomba/camera_publisher
+python3 main.py &
+
+cd ~
+cd roomba/movement_subscriber
+python3 main.py &
+
+cd ~
+cd roomba/light_bumper_publisher/code
+python3 main.py &
