@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd ~
+cd roomba/camera_publisher
+python3 main.py &
+
+cd ~
+cd roomba/movement_subscriber
+python3 main.py &

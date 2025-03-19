@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cd ~
+cd roomba/camera_publisher/_build
+./webcam_publisher &
+
+cd ~
+cd roomba/pyroombaadapter
+python3 go_and_back.py &
+python3 play_song1.py &

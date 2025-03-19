@@ -1,0 +1,7 @@
+#!/bin/bash
+
+rm -r _build
+mkdir _build
+cd _build
+cmake ..
+make
