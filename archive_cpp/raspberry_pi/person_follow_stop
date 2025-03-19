@@ -1,4 +1,0 @@
-#!/bin/bash
-
-killall webcam_publisher
-killall python3

@@ -1,9 +1,0 @@
-#!/bin/bash
-
-cd ~
-cd roomba/camera_publisher/_build
-./webcam_publisher &
-
-cd ~
-cd roomba/movement_subscriber
-python3 main.py &
