@@ -1,7 +1,7 @@
 /.venv
 /.vscode
 /laptop/person_detection/code/proto_python/__pycache__
-/laptp/person_follower/code/proto_python/__pycache__
+/laptop/person_follower/code/proto_python/__pycache__
 /laptop/manual_control/code/proto_python/__pycache__
 /laptop/person_detection/code/data
 /laptop/person_follower/code/data
