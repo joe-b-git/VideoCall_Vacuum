@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+message Sensors {
+    message LightBumper {
+        bool light_bump_left = 1;
+        bool light_bump_front_left = 2;
+        bool light_bump_front_center_left = 3;
+        bool light_bump_front_center_right = 4;
+        bool light_bump_front_right = 5;
+        bool light_bump_right = 6;
+    }
+
+    message Bumper {
+        bool bump_left = 1;
+        bool bump_right = 2;
+    }
+
+    message Wall {
+        bool wall_seen = 1;
+    }
+
+    // Fields to hold the nested messages
+    LightBumper light_bumper = 1;
+    Bumper bumper = 2;
+    Wall wall = 3;
+}
