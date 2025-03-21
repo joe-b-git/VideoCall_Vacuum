@@ -7,8 +7,8 @@ import numpy as np
 from proto_python.image_pb2 import ImageMessage
 from proto_python.light_bumper_pb2 import LightBumper  # Import the LightBumper message
 from proto_python.movement_pb2 import Movement
-from .person_detector import PersonDetector
-from .person_follower import PersonFollower
+from person_detector import PersonDetector
+from person_follower import PersonFollower
 
 class VideoCallVacuum:
     def __init__(self):

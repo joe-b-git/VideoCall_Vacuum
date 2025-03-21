@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-from .utils import calculate_center, calculate_bottom_center
+from utils import calculate_center, calculate_bottom_center
 
 class PersonDetector:
     def __init__(self, use_gpu=False):
@@ -30,7 +30,12 @@ class PersonDetector:
 
         self.layer_names = self.net.getLayerNames()
         output_layers_indices = self.net.getUnconnectedOutLayers()
-        self.output_layers = [self.layer_names[i[0] - 1] for i in output_layers_indices]
+        if output_layers_indices.ndim == 1:
+            # This is a 1-D numpy array of integers
+            self.output_layers = [self.layer_names[i - 1] for i in output_layers_indices]
+        else:
+            # This is a 2-D numpy array of integers
+            self.output_layers = [self.layer_names[i[0] - 1] for i in output_layers_indices]
 
         self.person_class_id = 0
         self.confidence_threshold = 0.5
