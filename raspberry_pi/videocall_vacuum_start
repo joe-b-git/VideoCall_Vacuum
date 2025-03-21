@@ -11,5 +11,5 @@ cd roomba/movement_subscriber
 python3 main.py &
 
 cd ~
-cd roomba/light_bumper_publisher/code
+cd roomba/sensors_publisher
 python3 main.py &

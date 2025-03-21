@@ -24,7 +24,7 @@ class PersonFollower:
         self.person_away_start_time = None
         self.person_lost_start_time = None
 
-    def update(self, person_found, person_box, person_position, width, bumper_data):
+    def update(self, person_found, person_box, person_position, width, bumper_sensor_data):
         # print(f"Current State: {self.state}") #debug
         current_time = time.time()
         dt = current_time - self.last_time
@@ -50,7 +50,7 @@ class PersonFollower:
                 bottom_center_x, bottom_center_y = calculate_bottom_center(person_box)
                 yaw_error = center_width - bottom_center_x
                 yaw_rate = self.yaw_pid.calculate(-yaw_error, current_time)
-                velocity_error = 320 - bottom_center_y
+                velocity_error = 340 - bottom_center_y
                 velocity = self.velocity_pid.calculate(-velocity_error, current_time)
 
                 self.send_movement(velocity, yaw_rate)
@@ -65,6 +65,8 @@ class PersonFollower:
                 elif bottom_center_y < 100: #person is walking away
                     self.state = FollowerState.PERSON_AWAY
                     self.person_away_start_time = current_time
+                else:
+                    self.state = FollowerState.FIND_SOMEONE
 
         elif self.state == FollowerState.PERSON_BEHIND:
             if person_found:
@@ -110,7 +112,7 @@ class PersonFollower:
                 else:
                     self.send_movement(0.1, 0)
                 
-                if self.person_away_start_time is not None and current_time - self.person_away_start_time >= 1:
+                if self.person_away_start_time is not None and current_time - self.person_away_start_time >= 2:
                     if self.last_known_person_position[0] < width / 2:
                         self.send_movement(0, 120)  # Turn left
                     else:
@@ -126,11 +128,12 @@ class PersonFollower:
                 self.person_lost_start_time = None
             else:
                 # Wall following logic
-                if bumper_data["front_left"] or bumper_data["front_right"] \
-                        or bumper_data["front_center_left"] or bumper_data["front_center_right"] \
-                        or bumper_data ["left"]:
+                if bumper_sensor_data["front_left"] or bumper_sensor_data["front_right"] \
+                        or bumper_sensor_data["front_center_left"] or bumper_sensor_data["front_center_right"] \
+                        or bumper_sensor_data ["left"] or bumper_sensor_data["bump_left"] \
+                        or bumper_sensor_data["bump_right"]:
                     self.send_movement(0, 30)  # Turn left away from wall
-                elif bumper_data["right"]:
+                elif bumper_sensor_data["right"]:
                     self.send_movement(0.1, 0)  # Move forward
                 else:
                     self.send_movement(0.1, -5) #turn right slightly to find wall
