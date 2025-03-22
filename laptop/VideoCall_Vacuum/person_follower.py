@@ -28,6 +28,10 @@ class PersonFollower:
         self.person_away_threshold = 3.0
         self.person_away_turn_threshold = 1.0 # Time in seconds before turning when person is away
 
+        # Initialize grid and robot position
+        self.grid = [[0 for _ in range(10)] for _ in range(10)]
+        self.robot_position = (5, 5)  # Start in the middle of the grid
+
     def update(self, person_found, person_box, width, height, bumper_sensor_data, predicted_position=None):
         print(f"Current State: {self.state}") #debug
         print(f"Last known bottom x,y: {self.last_known_bottom_center}")
