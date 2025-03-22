@@ -34,3 +34,14 @@ class PIDController:
         self.previous_error = error
         self.last_time = current_time
         return output
+
+    def adjust_parameters(self, new_kp, new_ki, new_kd):
+        self.kp = new_kp
+        self.ki = new_ki
+        self.kd = new_kd
+
+    def dynamic_adjustment(self, environment_factor, movement_factor):
+        # Adjust the PID parameters based on the environment and movement factors
+        self.kp = self.kp * environment_factor
+        self.ki = self.ki * movement_factor
+        self.kd = self.kd * (environment_factor + movement_factor) / 2
