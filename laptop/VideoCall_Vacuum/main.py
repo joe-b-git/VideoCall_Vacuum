@@ -34,13 +34,13 @@ class VideoCallVacuum:
         original_frame = np.frombuffer(msg.data, dtype=np.uint8).reshape((msg.height, msg.width, msg.channels))
         frame = original_frame.copy() #this is the fix, we copy the array to make it writeable
 
-        person_found, person_box, person_position, width = self.detector.detect_people(frame)
+        person_found, person_box, person_position, width, height = self.detector.detect_people(frame)
 
         if person_found:
             x, y, w, h = person_box
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
 
-        self.follower.update(person_found, person_box, person_position, width, self.bumper_sensor_data)
+        self.follower.update(person_found, person_box, width, height, self.bumper_sensor_data)
 
         cv2.imshow("Webcam Feed", frame)
         cv2.waitKey(1)

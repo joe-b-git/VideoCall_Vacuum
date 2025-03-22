@@ -105,6 +105,6 @@ class PersonDetector:
                     most_centered_person_box = box
                     most_centered_person_position = position
             self.last_known_person_position = most_centered_person_position
-            return True, most_centered_person_box, most_centered_person_position, width
+            return True, most_centered_person_box, width, height
         else:
-            return False, None, self.last_known_person_position, width
+            return False, None, width, height
