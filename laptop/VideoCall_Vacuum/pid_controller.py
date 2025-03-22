@@ -10,7 +10,7 @@ class PIDController:
         self.previous_error = 0
         self.last_time = None
 
-    def calculate(self, current_value, current_time):
+    def calculate(self, current_value, current_time, deadzone):
         if self.last_time is None:
             self.last_time = current_time
             return 0.0
@@ -20,7 +20,7 @@ class PIDController:
             return 0.0
         error = self.setpoint - current_value
 
-        if abs(error) < self.deadzone:
+        if abs(error) < deadzone:
             self.integral = 0
             self.previous_error = 0
             return 0.0

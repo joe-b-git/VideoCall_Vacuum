@@ -15,15 +15,21 @@ class PersonFollower:
         self.movement_publisher = movement_publisher
         self.state = FollowerState.FIND_SOMEONE
         self.last_known_bottom_center = None
-        self.yaw_pid = PIDController(kp=0.3, ki=0.0000, kd=0.0001, setpoint=0.0, output_limits=(-100, 100), deadzone=80)
-        self.velocity_pid = PIDController(kp=0.002, ki=0.00000, kd=0.00001, setpoint=0.0, output_limits=(-0.2, 0.2), deadzone=20)
+        self.yaw_pid = PIDController(kp=0.25, ki=0.0000, kd=0.0001, setpoint=0.0, output_limits=(-100, 100), deadzone=80)
+        self.velocity_pid = PIDController(kp=0.002, ki=0.00000, kd=0.00001, setpoint=0.0, output_limits=(-0.25, 0.25), deadzone=20)
         self.person_behind_start_time = None
         self.person_sideways_start_time = None
         self.person_away_start_time = None
         self.person_lost_start_time = None
+        self.bumper_sensor_data = None
 
     def update(self, person_found, person_box, width, height, bumper_sensor_data):
-        # print(f"Current State: {self.state}") #debug
+        print(f"Current State: {self.state}") #debug
+        print(f"Last known bottom x,y: {self.last_known_bottom_center}")
+        print("-----------------------------------------")
+
+        self.bumper_sensor_data = bumper_sensor_data
+
         current_time = time.time()
 
         target_x = width / 2
@@ -39,30 +45,33 @@ class PersonFollower:
         else:
             if self.person_lost_start_time is None:
                 self.person_lost_start_time = current_time
-            elif current_time - self.person_lost_start_time >= 2:
-                self.person_lost_start_time = None
+            # elif current_time - self.person_lost_start_time >= 2:
+            #     self.person_lost_start_time = None
 
         if self.state == FollowerState.PERSON_IN_FRAME:
             if person_found:               
                 bottom_center_x, bottom_center_y = calculate_bottom_center(person_box)
+                _, _, box_width, _ = person_box
+                if box_width > 320: box_width = 320
                 yaw_error = target_x - bottom_center_x
-                yaw_rate = self.yaw_pid.calculate(-yaw_error, current_time)
+                yaw_rate = self.yaw_pid.calculate(-yaw_error, current_time, deadzone=box_width/4)
                 velocity_error = target_y - bottom_center_y
-                velocity = self.velocity_pid.calculate(-velocity_error, current_time)
+                velocity = self.velocity_pid.calculate(-velocity_error, current_time, deadzone=20)
 
                 self.send_movement(velocity, yaw_rate)
-            elif self.person_lost_start_time is not None:
+            else:
                 bottom_center_x, bottom_center_y = self.last_known_bottom_center
                 if bottom_center_y > height - 10: #person is behind
                     self.state = FollowerState.PERSON_BEHIND
                     self.person_behind_start_time = current_time
-                elif bottom_center_x < 100 or bottom_center_x > width - 100: #person is too far sideways
+                elif bottom_center_x < 150 or bottom_center_x > width - 150: #person is too far sideways
+                #elif bottom_center_x < width/2 - 80  or bottom_center_x > width/2 + 100: #person is too far sideways
                     self.state = FollowerState.PERSON_SIDEWAYS
                     self.person_sideways_start_time = current_time
-                elif bottom_center_y < 100: #person is walking away
-                    self.state = FollowerState.PERSON_AWAY
-                    self.person_away_start_time = current_time
-                else:
+                # elif bottom_center_y < 100: #person is walking away
+                #     self.state = FollowerState.PERSON_AWAY
+                #     self.person_away_start_time = current_time
+                elif self.person_lost_start_time is not None and current_time - self.person_lost_start_time >= 2:
                     self.state = FollowerState.FIND_SOMEONE
 
         elif self.state == FollowerState.PERSON_BEHIND:
@@ -73,11 +82,11 @@ class PersonFollower:
             else:
                 # Turn 360 degrees in the direction of the last known person
                 if self.last_known_bottom_center[0] < width / 2:
-                    self.send_movement(0, 90)  # Turn left
+                    self.send_movement(0, 40)  # Turn left
                 else:
-                    self.send_movement(0, -90)  # Turn right
+                    self.send_movement(0, -40)  # Turn right
                 
-                if self.person_behind_start_time is not None and current_time - self.person_behind_start_time >= 4:
+                if self.person_behind_start_time is not None and current_time - self.person_behind_start_time >= 8:
                     self.state = FollowerState.FIND_SOMEONE
                     self.person_behind_start_time = None
 
@@ -89,11 +98,11 @@ class PersonFollower:
             else:
                 # Turn up to 90 degrees in the direction of the last known person
                 if self.last_known_bottom_center[0] < width / 2:
-                    self.send_movement(0, 45)  # Turn left
+                    self.send_movement(0, 30)  # Turn left
                 else:
-                    self.send_movement(0, -45)  # Turn right
+                    self.send_movement(0, -30)  # Turn right
                 
-                if self.person_sideways_start_time is not None and current_time - self.person_sideways_start_time >= 3:
+                if self.person_sideways_start_time is not None and current_time - self.person_sideways_start_time >= 6:
                     self.state = FollowerState.FIND_SOMEONE
                     self.person_sideways_start_time = None
 
@@ -138,6 +147,8 @@ class PersonFollower:
     def send_movement(self, velocity, yaw_rate):
         from proto_python.movement_pb2 import Movement
         movement_message = Movement()
+        if self.bumper_sensor_data["bump_left"] or self.bumper_sensor_data["bump_right"]:
+            velocity = 0.0
         movement_message.velocity = velocity
         movement_message.yaw_rate = yaw_rate
         self.movement_publisher.send(movement_message)
