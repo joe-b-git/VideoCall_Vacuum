@@ -48,13 +48,15 @@ class PersonDetector:
     def detect_people(self, img):
         height, width, _ = img.shape
 
-        if self.frame_count % 2 == 0 or True:
+        if self.frame_count % 2 == 0 or True:  # Run detection on every other frame
             blob = cv2.dnn.blobFromImage(img, 0.00392, (320, 320), (0, 0, 0), True, crop=False)
             self.net.setInput(blob)
             outs = self.net.forward(self.output_layers)
             self.prev_detections = outs
-        else:
+        elif self.prev_detections is not None:
             outs = self.prev_detections
+        else:
+            return False, None, width, height
 
         self.frame_count += 1
 
@@ -79,25 +81,23 @@ class PersonDetector:
 
         indexes = cv2.dnn.NMSBoxes(boxes, confidences, self.confidence_threshold, self.nms_threshold)
 
-        people_boxes = []
-        people_positions = []
+        people_data = []  # Store (box, position) tuples
         self.person_found = False
         for i in range(len(boxes)):
             if i in indexes:
                 if class_ids[i] == self.person_class_id:
                     self.person_found = True
                     x, y, w, h = boxes[i]
-                    people_boxes.append((x, y, w, h))
-                    center_x, center_y = calculate_center((x,y,w,h))
-                    people_positions.append((center_x, center_y))
+                    center_x, center_y = calculate_center((x, y, w, h))
+                    people_data.append(((x, y, w, h), (center_x, center_y)))
 
         if self.person_found:
-            # Find the most centered person
+            # Find the most centered person in a single loop
             most_centered_person_box = None
             most_centered_person_position = None
             closest_person_distance = float('inf')
             center_width = width / 2
-            for box, position in zip(people_boxes, people_positions):
+            for box, position in people_data:
                 center_x, _ = position
                 distance_to_center = abs(center_width - center_x)
                 if distance_to_center < closest_person_distance:

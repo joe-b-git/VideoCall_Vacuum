@@ -1,3 +1,9 @@
 #!/bin/bash
 
 killall python3
+
+cd ~
+cd roomba/pyroombaadapter
+python3 stop_pyroombaadapter.py &
+
+killall python3
