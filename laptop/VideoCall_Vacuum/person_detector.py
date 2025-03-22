@@ -82,8 +82,26 @@ class PersonDetector:
         self.person_found = False
         self.kalman_filter = KalmanFilter(dt=0.1, u_x=0.1, u_y=0.1, std_acc=0.1, x_std_meas=0.1, y_std_meas=0.1)
 
+        # Optical flow parameters
+        self.lk_params = dict(winSize=(15, 15), maxLevel=2, criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+        self.prev_gray = None
+        self.prev_points = None
+
     def detect_people(self, img):
         height, width, _ = img.shape
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        if self.prev_gray is not None and self.prev_points is not None:
+            next_points, status, _ = cv2.calcOpticalFlowPyrLK(self.prev_gray, gray, self.prev_points, None, **self.lk_params)
+            good_new = next_points[status == 1]
+            good_old = self.prev_points[status == 1]
+
+            for i, (new, old) in enumerate(zip(good_new, good_old)):
+                a, b = new.ravel()
+                c, d = old.ravel()
+                cv2.line(img, (a, b), (c, d), (0, 255, 0), 2)
+                cv2.circle(img, (a, b), 5, (0, 255, 0), -1)
 
         if self.frame_count % 2 == 0 or True:  # Run detection on every other frame
             blob = cv2.dnn.blobFromImage(img, 0.00392, (320, 320), (0, 0, 0), True, crop=False)
@@ -143,7 +161,11 @@ class PersonDetector:
                     most_centered_person_position = position
             self.last_known_person_position = most_centered_person_position
             self.kalman_filter.update(np.matrix(most_centered_person_position).T)
+            self.prev_gray = gray.copy()
+            self.prev_points = np.array([most_centered_person_position], dtype=np.float32)
             return True, most_centered_person_box, width, height
         else:
             predicted_position = self.kalman_filter.predict()
+            self.prev_gray = gray.copy()
+            self.prev_points = np.array([predicted_position], dtype=np.float32)
             return False, None, width, height, predicted_position
