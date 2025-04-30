@@ -74,7 +74,7 @@ class PersonDetector:
             self.output_layers = [self.layer_names[i[0] - 1] for i in output_layers_indices]
 
         self.person_class_id = 0
-        self.confidence_threshold = 0.5
+        self.confidence_threshold = 0.6 # 0.5
         self.nms_threshold = 0.4
         self.prev_detections = None
         self.frame_count = 0
@@ -94,14 +94,14 @@ class PersonDetector:
 
         if self.prev_gray is not None and self.prev_points is not None:
             next_points, status, _ = cv2.calcOpticalFlowPyrLK(self.prev_gray, gray, self.prev_points, None, **self.lk_params)
-            good_new = next_points[status == 1]
-            good_old = self.prev_points[status == 1]
+            good_new = next_points[status.ravel() == 1]
+            good_old = self.prev_points[status.ravel() == 1]
 
             for i, (new, old) in enumerate(zip(good_new, good_old)):
                 a, b = new.ravel()
                 c, d = old.ravel()
-                cv2.line(img, (a, b), (c, d), (0, 255, 0), 2)
-                cv2.circle(img, (a, b), 5, (0, 255, 0), -1)
+                cv2.line(img, (int(a), int(b)), (int(c), int(d)), (0, 255, 0), 2)
+                cv2.circle(img, (int(a), int(b)), 5, (0, 255, 0), -1)
 
         if self.frame_count % 2 == 0 or True:  # Run detection on every other frame
             blob = cv2.dnn.blobFromImage(img, 0.00392, (320, 320), (0, 0, 0), True, crop=False)
@@ -163,7 +163,7 @@ class PersonDetector:
             self.kalman_filter.update(np.matrix(most_centered_person_position).T)
             self.prev_gray = gray.copy()
             self.prev_points = np.array([most_centered_person_position], dtype=np.float32)
-            return True, most_centered_person_box, width, height
+            return True, most_centered_person_box, width, height, None
         else:
             predicted_position = self.kalman_filter.predict()
             self.prev_gray = gray.copy()
